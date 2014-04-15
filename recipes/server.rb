@@ -20,8 +20,12 @@ if node['logstash']['install_zeromq']
   node['logstash']['zeromq_packages'].each { |p| package p }
 end
 
+config_dir = "#{node['logstash']['server']['config_dir']}"
+
 if node['logstash']['server']['install_method'] == 'repo'
   service_resource = 'service[logstash]'
+  node.set['logstash']['server']['patterns_dir'] = '/etc/logstash/patterns'
+  config_dir = "#{node['logstash']['server']['config_dir']}"
 elsif node['logstash']['server']['init_method'] == 'runit'
   include_recipe 'runit'
   service_resource = 'runit_service[logstash_server]'
@@ -72,6 +76,13 @@ if node['logstash']['server']['install_method'] != 'repo'
 	    group node['logstash']['group']
 	  end
 	end
+  
+  directory "#{node['logstash']['server']['home']}/etc/conf.d" do
+    action :create
+    mode '0755'
+    owner node['logstash']['user']
+    group node['logstash']['group']
+  end
 end
 	
 # installation
@@ -90,7 +101,7 @@ if node['logstash']['server']['install_method'] == 'jar'
     notifies :restart, service_resource
   end
 elsif node['logstash']['server']['install_method'] == 'repo'
-    include_recipe 'logstash::repoinstall'
+  include_recipe 'logstash::repoinstall'
 else
   include_recipe 'logstash::source'
 
@@ -99,15 +110,6 @@ else
     to "#{node['logstash']['basedir']}/source/build/logstash-#{logstash_version}-monolithic.jar"
     notifies :restart, service_resource
   end
-end
-
-if node['logstash']['server']['install_method'] != 'repo'
-	directory "#{node['logstash']['server']['home']}/etc/conf.d" do
-	  action :create
-	  mode '0755'
-	  owner node['logstash']['user']
-	  group node['logstash']['group']
-	end
 end
 
 directory patterns_dir do
@@ -136,12 +138,6 @@ directory log_dir do
   owner node['logstash']['user']
   group node['logstash']['group']
   recursive true
-end
-
-if node['logstash']['server']['install_method'] == 'repo'
-    config_dir = "#{node['logstash']['server']['config_dir']}"
-else
-    config_dir = "#{node['logstash']['server']['home']}/#{node['logstash']['server']['config_dir']}"
 end
 
 template "#{config_dir}/#{node['logstash']['server']['config_file']}" do
@@ -246,6 +242,14 @@ if node['logstash']['server']['install_method'] != 'repo'
 	  end
 	end
 else
+
+    cookbook_file "/etc/default/logstash" do
+      source "default_logstash"
+      owner "root"
+      group "root"
+      mode "0644"
+    end
+    
     service "logstash" do
         service_name 'logstash'
         supports :restart => true, :reload => true, :status => true
