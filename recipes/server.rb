@@ -242,19 +242,12 @@ if node['logstash']['server']['install_method'] != 'repo'
 	  end
 	end
 else
-
-    cookbook_file "/etc/default/logstash" do
-      source "default_logstash"
-      owner "root"
-      group "root"
-      mode "0644"
-    end
     
-    service "logstash" do
-        service_name 'logstash'
-        supports :restart => true, :reload => true, :status => true
-        action [:enable, :start]
-    end
+  service "logstash" do
+      service_name 'logstash'
+      supports :restart => true, :reload => true, :status => true
+      action [:enable, :start]
+  end
 end
 
 logrotate_app 'logstash_server' do

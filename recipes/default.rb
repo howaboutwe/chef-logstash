@@ -5,6 +5,13 @@
 #
 include_recipe 'runit' unless node['platform_version'] >= '12.04'
 
+cookbook_file "/etc/default/logstash" do
+  source "default_logstash"
+  owner "root"
+  group "root"
+  mode "0644"
+end
+
 if node['logstash']['create_account']
 
   group node['logstash']['group'] do
