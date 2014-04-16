@@ -20,6 +20,44 @@ if node['logstash']['install_zeromq']
   node['logstash']['zeromq_packages'].each { |p| package p }
 end
 
+config_dir = node['logstash']['server']['config_dir']
+
+if node['logstash']['server']['install_method'] == 'repo'
+  service_resource = 'service[logstash]'
+  node.set['logstash']['server']['patterns_dir'] = '/etc/logstash/patterns'
+  config_dir = node['logstash']['server']['config_dir']
+elsif node['logstash']['server']['init_method'] == 'runit'
+  include_recipe 'runit'
+  service_resource = 'runit_service[logstash_server]'
+else
+  service_resource = 'service[logstash_server]'
+end
+
+if node['logstash']['server']['patterns_dir'][0] == '/'
+  patterns_dir = node['logstash']['server']['patterns_dir']
+else
+  patterns_dir = node['logstash']['server']['home'] + '/' + node['logstash']['server']['patterns_dir']
+end
+
+directory patterns_dir do
+  action :create
+  mode '0755'
+  owner node['logstash']['user']
+  group node['logstash']['group']
+end
+
+node['logstash']['patterns'].each do |file, hash|
+  template_name = patterns_dir + '/' + file
+  template template_name do
+    source 'patterns.erb'
+    owner node['logstash']['user']
+    group node['logstash']['group']
+    variables(:patterns => hash)
+    mode '0644'
+    notifies :restart, service_resource
+  end
+end
+
 if Chef::Config[:solo]
   es_server_ip = node['logstash']['elasticsearch_ip']
   graphite_server_ip = node['logstash']['graphite_ip']

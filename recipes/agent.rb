@@ -7,6 +7,8 @@
 include_recipe 'logstash::default'
 include_recipe 'yum::default'
 
+config_dir = node['logstash']['server']['config_dir']
+
 if node['logstash']['agent']['init_method'] == 'runit'
   include_recipe 'runit'
   service_resource = 'runit_service[logstash_agent]'
@@ -23,6 +25,25 @@ end
 if node['logstash']['install_zeromq']
   include_recipe 'logstash::zero_mq_repo'
   node['logstash']['zeromq_packages'].each { |p| package p }
+end
+ 
+directory patterns_dir do
+  action :create
+  mode '0755'
+  owner node['logstash']['user']
+  group node['logstash']['group']
+end
+
+node['logstash']['patterns'].each do |file, hash|
+  template_name = patterns_dir + '/' + file
+  template template_name do
+    source 'patterns.erb'
+    owner node['logstash']['user']
+    group node['logstash']['group']
+    variables(:patterns => hash)
+    mode '0644'
+    notifies :restart, service_resource
+  end
 end
 
 # check if running chef-solo.  If not, detect the logstash server/ip by role.  If I can't do that, fall back to using ['logstash']['agent']['server_ipaddress']
