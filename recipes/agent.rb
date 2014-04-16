@@ -37,49 +37,34 @@ else
   end
 end
 
-directory node['logstash']['agent']['home'] do
-  action :create
-  mode '0755'
-  owner node['logstash']['user']
-  group node['logstash']['group']
-end
 
-%w{bin etc lib tmp log}.each do |ldir|
-  directory "#{node['logstash']['agent']['home']}/#{ldir}" do
+# Create directory for logstash
+if node['logstash']['server']['install_method'] != 'repo'
+  directory node['logstash']['agent']['home'] do
     action :create
     mode '0755'
     owner node['logstash']['user']
     group node['logstash']['group']
   end
 
-  link "#{node['logstash']['homedir']}/#{ldir}" do
-    to "#{node['logstash']['agent']['home']}/#{ldir}"
+  %w{bin etc lib tmp log}.each do |ldir|
+    directory "#{node['logstash']['agent']['home']}/#{ldir}" do
+      action :create
+      mode '0755'
+      owner node['logstash']['user']
+      group node['logstash']['group']
+    end
+
+    link "#{node['logstash']['homedir']}/#{ldir}" do
+      to "#{node['logstash']['agent']['home']}/#{ldir}"
+    end
   end
-end
 
-directory "#{node['logstash']['agent']['home']}/etc/conf.d" do
-  action :create
-  mode '0755'
-  owner node['logstash']['user']
-  group node['logstash']['group']
-end
-
-directory patterns_dir do
-  action :create
-  mode '0755'
-  owner node['logstash']['user']
-  group node['logstash']['group']
-end
-
-node['logstash']['patterns'].each do |file, hash|
-  template_name = patterns_dir + '/' + file
-  template template_name do
-    source 'patterns.erb'
+  directory "#{node['logstash']['agent']['home']}/etc/conf.d" do
+    action :create
+    mode '0755'
     owner node['logstash']['user']
     group node['logstash']['group']
-    variables(:patterns => hash)
-    mode '0644'
-    notifies :restart, service_resource
   end
 end
 
@@ -109,7 +94,7 @@ else
   end
 end
 
-template "#{node['logstash']['agent']['home']}/#{node['logstash']['agent']['config_dir']}/#{node['logstash']['agent']['config_file']}" do
+template "#{config_dir}/#{node['logstash']['agent']['config_file']}" do
   source node['logstash']['agent']['base_config']
   cookbook node['logstash']['agent']['base_config_cookbook']
   owner node['logstash']['user']
