@@ -32,9 +32,12 @@ script
   <% if node['logstash']['agent']['log_file'] -%>
   export LOGSTASH_OPTS="$LOGSTASH_OPTS -l <%= node['logstash']['agent']['log_file'] %>"
   <% end -%>
-
+  <% if node['logstash']['server']['install_method'] == 'repo' -%>
+  export OPTS="$JAVA_OPTS $GC_OPTS -jar $LOGSTASH_HOME/logstash.jar $LOGSTASH_OPTS"
+  <% else -%>
   export OPTS="$JAVA_OPTS $GC_OPTS -jar $LOGSTASH_HOME/lib/logstash.jar $LOGSTASH_OPTS"
-
+  <% end -%>
+ 
   <% if node['logstash']['agent']['upstart_with_sudo'] -%>
   exec sudo -u <%= node['logstash']['user'] %> /usr/bin/java $OPTS
   <% else -%>
