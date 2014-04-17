@@ -32,6 +32,7 @@ directory patterns_dir do
   mode '0755'
   owner node['logstash']['user']
   group node['logstash']['group']
+  recursive true
 end
 
 node['logstash']['patterns'].each do |file, hash|
