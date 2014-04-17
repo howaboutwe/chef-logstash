@@ -25,7 +25,6 @@ config_dir = node['logstash']['server']['config_dir']
 if node['logstash']['server']['install_method'] == 'repo'
   service_resource = 'service[logstash]'
   node.set['logstash']['server']['patterns_dir'] = '/etc/logstash/patterns'
-  config_dir = node['logstash']['server']['config_dir']
 elsif node['logstash']['server']['init_method'] == 'runit'
   include_recipe 'runit'
   service_resource = 'runit_service[logstash_server]'
@@ -242,7 +241,14 @@ if node['logstash']['server']['install_method'] != 'repo'
 	  end
 	end
 else
-    
+  
+  cookbook_file "/etc/default/logstash" do
+    source "default_logstash"
+    owner "root"
+    group "root"
+    mode "0644"
+  end
+
   service "logstash" do
       service_name 'logstash'
       supports :restart => true, :reload => true, :status => true

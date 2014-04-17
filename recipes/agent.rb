@@ -106,6 +106,13 @@ if node['logstash']['agent']['install_method'] == 'jar'
   end
 elsif node['logstash']['server']['install_method'] == 'repo'
     include_recipe 'logstash::repoinstall'
+    
+    cookbook_file "/etc/default/logstash" do
+      source "default_logstash"
+      owner "root"
+      group "root"
+      mode "0644"
+    end
 else
   include_recipe 'logstash::source'
 
