@@ -62,7 +62,7 @@ if Chef::Config[:solo]
   es_server_ip = node['logstash']['elasticsearch_ip']
   graphite_server_ip = node['logstash']['graphite_ip']
 else
-  Chef::Log.info "Here: node['logstash']['elasticsearch_ip']"
+  Chef::Log.warn "Here: #{node['logstash']['elasticsearch_ip']}"
   es_results = search(:node, node['logstash']['elasticsearch_query'])
   graphite_results = search(:node, node['logstash']['graphite_query'])
 
