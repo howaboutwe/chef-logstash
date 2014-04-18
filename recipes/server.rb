@@ -65,9 +65,9 @@ else
   es_results = search(:node, node['logstash']['elasticsearch_query'])
   graphite_results = search(:node, node['logstash']['graphite_query'])
 
-  if !es_results.empty? || !node['logstash']['elasticsearch_ip'].empty?
+  if !es_results.empty?
     es_server_ip = es_results[0]['ipaddress']
-  else
+  elsif !node['logstash']['elasticsearch_ip'].empty?
     es_server_ip = node['logstash']['elasticsearch_ip']
   end
 
